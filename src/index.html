@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tető Felület Számító</title>
+    <meta name="description" content="Professzionális tető felület számító alkalmazás tetőfedő szakemberek és építési vállalkozók számára">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">🏠 Tető Kalkulátor</h1>
+            <nav class="nav">
+                <button id="new-project-btn" class="btn btn-primary">Új Projekt</button>
+                <button id="help-btn" class="btn btn-secondary">Súgó</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="panel">
+                <h2 class="panel-title">1. Cím keresése</h2>
+                <div class="search-section">
+                    <input 
+                        type="text" 
+                        id="address-input" 
+                        class="input" 
+                        placeholder="Pl: Budapest, Andrássy út 1"
+                        autocomplete="off"
+                    >
+                    <button id="search-btn" class="btn btn-primary btn-block">
+                        🔍 Keresés
+                    </button>
+                </div>
+                <div id="search-result" class="search-result"></div>
+            </div>
+
+            <div class="panel">
+                <h2 class="panel-title">2. Tető rajzolása</h2>
+                <div class="tools-section">
+                    <button id="draw-btn" class="btn btn-tool">
+                        ✏️ Rajzolás indítása
+                    </button>
+                    <button id="edit-btn" class="btn btn-tool" disabled>
+                        🖊️ Szerkesztés
+                    </button>
+                    <button id="delete-btn" class="btn btn-tool" disabled>
+                        🗑️ Törlés
+                    </button>
+                </div>
+                <div id="roof-segments" class="segments-list">
+                    <p class="text-muted">Még nincs tetőfelület rajzolva</p>
+                </div>
+                <div id="total-area" class="total-area">
+                    <strong>Összterület:</strong> <span id="area-value">0</span> m²
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2 class="panel-title">3. Kalkuláció</h2>
+                <div class="calculation-section">
+                    <label class="label">Tetőfedő anyag:</label>
+                    <select id="material-select" class="select">
+                        <option value="">-- Válassz anyagot --</option>
+                        <option value="cserep">Cserép (3500 Ft/m²)</option>
+                        <option value="trapezlemez">Trapézlemez (2800 Ft/m²)</option>
+                        <option value="zsindely">Zsindely (4200 Ft/m²)</option>
+                    </select>
+
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="bontas-check" class="checkbox">
+                            Bontás (800 Ft/m²)
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="lecezes-check" class="checkbox" checked>
+                            Lécezés (1200 Ft/m²)
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="folia-check" class="checkbox" checked>
+                            Szigetelő fólia (800 Ft/m²)
+                        </label>
+                    </div>
+
+                    <button id="calculate-btn" class="btn btn-success btn-block" disabled>
+                        💰 Kalkuláció
+                    </button>
+                </div>
+
+                <div id="calculation-result" class="calculation-result"></div>
+            </div>
+
+            <div class="panel">
+                <button id="generate-pdf-btn" class="btn btn-primary btn-block" disabled>
+                    📄 PDF Árajánlat
+                </button>
+            </div>
+        </aside>
+
+        <!-- Map Container -->
+        <section class="map-section">
+            <div id="map" class="map"></div>
+            <div class="map-controls">
+                <button id="layer-toggle" class="btn-map-control" title="Satellite/Utca váltás">
+                    🛰️
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2026 Tető Kalkulátor | GitHub Copilot Project</p>
+    </footer>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Fabric.js (for drawing) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+    
+    <!-- jsPDF (for PDF generation) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- Main App JS -->
+    <script type="module" src="./js/app.js"></script>
+</body>
+</html>
