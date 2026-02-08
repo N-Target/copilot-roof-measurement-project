@@ -116,8 +116,13 @@ function finishDrawing() {
     // Calculate area (Leaflet gives area in square meters)
     const area = L.GeometryUtil.geodesicArea(polygon.getLatLngs()[0]);
 
-    roofPolygons.push({ polygon, area });
-    window.roofPolygons = roofPolygons; // Update global reference
+    roofPolygons.push({ 
+        polygon, 
+        area,
+        multiplier: 1  // NEW: Default multiplier for duplication
+    });
+    window.roofPolygons = roofPolygons;
+    updateRoofSegmentsList();  // NEW: Update segments list
     updateTotalArea();
 
     document.getElementById('draw-btn').textContent = '✏️ Új felület rajzolása';
@@ -125,10 +130,98 @@ function finishDrawing() {
 }
 
 // ===========================
-// Area Calculation
+// Polygon Management (NEW!)
+// ============================
+function duplicatePolygon(index) {
+    const roof = roofPolygons[index];
+    if (!roof) return;
+    
+    const currentMultiplier = roof.multiplier || 1;
+    const multiplier = prompt(
+        `Hány egyforma oldal van?\n(pl: 2 nyeregtetőnél, 4 gúlatetőnél)\n\nJelenlegi szorzó: ${currentMultiplier}`,
+        currentMultiplier
+    );
+    
+    const num = parseInt(multiplier);
+    if (num && num > 0 && num <= 10) {
+        roof.multiplier = num;
+        updateRoofSegmentsList();
+        updateTotalArea();
+    } else if (multiplier !== null) {
+        alert('1 és 10 közötti számot adj meg!');
+    }
+}
+
+function deletePolygon(index) {
+    if (confirm('Biztosan törölni szeretnéd ezt a tetőfelületet?')) {
+        const roof = roofPolygons[index];
+        map.removeLayer(roof.polygon);
+        roofPolygons.splice(index, 1);
+        window.roofPolygons = roofPolygons;
+        updateRoofSegmentsList();
+        updateTotalArea();
+        
+        if (roofPolygons.length === 0) {
+            document.getElementById('calculate-btn').disabled = true;
+        }
+    }
+}
+
+function updateRoofSegmentsList() {
+    const container = document.getElementById('roof-segments');
+    
+    if (!container) return; // If element doesn't exist yet
+    
+    if (roofPolygons.length === 0) {
+        container.innerHTML = '<p class="text-muted">Még nincs tetőfelület rajzolva</p>';
+        return;
+    }
+    
+    let html = '<div class="segments-container">';
+    
+    roofPolygons.forEach((roof, index) => {
+        const multiplier = roof.multiplier || 1;
+        const baseArea = roof.area.toFixed(2);
+        const totalArea = (roof.area * multiplier).toFixed(2);
+        
+        html += `
+            <div class="segment-item">
+                <div class="segment-info">
+                    <strong>Felület ${index + 1}</strong>
+                    <div class="segment-details">
+                        <span class="segment-base">${baseArea} m²</span>
+                        ${multiplier > 1 ? `<span class="segment-multiplier">× ${multiplier}</span>` : ''}
+                        ${multiplier > 1 ? `<span class="segment-total">= ${totalArea} m²</span>` : ''}
+                    </div>
+                </div>
+                <div class="segment-actions">
+                    <button onclick="duplicatePolygon(${index})" class="btn btn-sm btn-secondary" title="Szorzó beállítása">
+                        ×${multiplier}
+                    </button>
+                    <button onclick="deletePolygon(${index})" class="btn btn-sm btn-danger" title="Törlés">
+                        🗑️
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// Make functions globally accessible
+window.duplicatePolygon = duplicatePolygon;
+window.deletePolygon = deletePolygon;
+
+// ===========================
+// Area Calculation (UPDATED)
 // ============================
 function updateTotalArea() {
-    totalArea = roofPolygons.reduce((sum, item) => sum + item.area, 0);
+    totalArea = roofPolygons.reduce((sum, item) => {
+        const multiplier = item.multiplier || 1;
+        return sum + (item.area * multiplier);  // NOW considers multiplier
+    }, 0);
     document.getElementById('area-value').textContent = totalArea.toFixed(2);
 }
 
