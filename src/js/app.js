@@ -8,6 +8,9 @@ let isDrawing = false;
 let currentPoints = [];
 let totalArea = 0;
 
+// Make map and roofPolygons globally accessible for roof-elements.js
+window.roofPolygons = roofPolygons;
+
 // ===========================
 // Initialize Map
 // ============================
@@ -22,6 +25,12 @@ function initMap() {
     }).addTo(map);
 
     console.log('Map initialized successfully');
+    
+    // Initialize Roof Elements Module if available
+    if (typeof initRoofElements === 'function') {
+        initRoofElements(map);
+        console.log('Roof Elements Module initialized');
+    }
 }
 
 // ===========================
@@ -108,6 +117,7 @@ function finishDrawing() {
     const area = L.GeometryUtil.geodesicArea(polygon.getLatLngs()[0]);
 
     roofPolygons.push({ polygon, area });
+    window.roofPolygons = roofPolygons; // Update global reference
     updateTotalArea();
 
     document.getElementById('draw-btn').textContent = '✏️ Új felület rajzolása';
@@ -145,6 +155,9 @@ function calculateCosts() {
     let totalCost = 0;
     let breakdown = '';
 
+    // Base area cost
+    breakdown += `<h4>Alapfelület (${totalArea.toFixed(2)} m²):</h4>`;
+    
     // Material cost
     const materialCost = totalArea * prices[material];
     totalCost += materialCost;
@@ -167,7 +180,16 @@ function calculateCosts() {
         breakdown += `<p><strong>Szigetelő fólia:</strong> ${cost.toLocaleString()} Ft</p>`;
     }
 
-    breakdown += `<hr><p><strong>Összesen:</strong> ${totalCost.toLocaleString()} Ft</p>`;
+    // Add roof elements costs if available
+    if (typeof window.roofElementsData !== 'undefined' && window.roofElementsData.totalCost > 0) {
+        breakdown += `<h4>Tető elemek:</h4>`;
+        Object.values(window.roofElementsData.summary).forEach(item => {
+            breakdown += `<p><strong>${item.icon} ${item.name}:</strong> ${item.length.toFixed(2)} m → ${item.cost.toLocaleString()} Ft</p>`;
+        });
+        totalCost += window.roofElementsData.totalCost;
+    }
+
+    breakdown += `<hr><p><strong>VÉGÖSSZEG:</strong> ${totalCost.toLocaleString()} Ft</p>`;
 
     const resultDiv = document.getElementById('calculation-result');
     resultDiv.innerHTML = breakdown;
@@ -193,7 +215,10 @@ function generatePDF() {
     // Add calculation results
     doc.text('Költségbecslés:', 20, 70);
     const resultText = document.getElementById('calculation-result').innerText;
-    doc.text(resultText, 20, 80);
+    
+    // Split text into lines to fit on page
+    const lines = doc.splitTextToSize(resultText, 170);
+    doc.text(lines, 20, 80);
 
     doc.save('teto-arajanlat.pdf');
 }
@@ -228,7 +253,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('generate-pdf-btn').addEventListener('click', generatePDF);
 });
 
-// Add Leaflet GeometryUtil plugin for area calculation
+// ===========================
+// Leaflet GeometryUtil Plugin
+// ============================
 L.GeometryUtil = L.extend(L.GeometryUtil || {}, {
     geodesicArea: function (latLngs) {
         var pointsCount = latLngs.length,
